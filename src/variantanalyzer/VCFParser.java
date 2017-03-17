@@ -9,16 +9,17 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  *
  * @author barbarian
  */
 public class VCFParser {
-    public static void ReadVCF(String filename,int threadNumber){
+    public static VariantFile ReadVCF(String filename,int threadNumber){
         
         VariantFile vcfFile = new VariantFile();
-        ArrayList<String> tempData = new ArrayList();
+        List<String> tempData = new ArrayList();
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filename));
@@ -45,19 +46,23 @@ public class VCFParser {
                 threads[i] = new VCFParserThread(tempData.subList(startIdx, stopIdx), vcfFile.getColNames());
                 threads[i].start();
             }
+            
             for(int i=0;i<threadNumber;i++){
                 threads[i].join();
             }
+            
             for(int i=0;i<threadNumber;i++){
                 vcfFile.getVariantResult().addAll(threads[i].getResult());
             }
-            System.out.println("Size "+vcfFile.getVariantResult().size());
-            System.out.println(vcfFile.getVariantResult().get(0).getColValues("CHROM"));
             
             reader.close();
+            
+            return vcfFile;
+            
         } catch (Exception e) {
             System.err.format("Exception occurred trying to read '%s'.", filename);
             e.printStackTrace();
+            return null;
 	}
     }
 }

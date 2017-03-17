@@ -12,35 +12,36 @@ import java.util.List;
  *
  * @author bharata
  */
-public class VCFParserThread extends Thread{
+public class VCFParserThread extends Thread {
+
     List<String> lines;
-    ArrayList<VariantResult> result;
-    ArrayList<String> colnames;
-    
-    public VCFParserThread(List lines,ArrayList colnames){
+    List<VariantResult> result;
+    List<String> colnames;
+
+    public VCFParserThread(List lines, List colnames) {
         this.lines = lines;
         result = new ArrayList();
         this.colnames = colnames;
     }
-    
+
+    private VariantResult processVCFLine(String line) {
+        String[] variantEntry = line.split("\\t");
+        VariantResult entry = new VariantResult();
+        for (int i = 0; i < variantEntry.length; i++) {
+            entry.addItem(this.colnames.get(i), variantEntry[i]);
+        }
+        return entry;
+    }
+
     @Override
     public void run() {
-        for(String line:lines){
-            String[] variantEntry = line.split("\\t");
-            VariantResult entry = new VariantResult();
-            for(int i=0;i<variantEntry.length;i++){
-              entry.addItem(this.colnames.get(i), variantEntry[i]);
-            }
-            result.add(entry);
+        for (String line : lines) {
+            this.result.add(this.processVCFLine(line));
         }
     }
 
-    public ArrayList<VariantResult> getResult() {
+    public List<VariantResult> getResult() {
         return result;
     }
 
-    public void setResult(ArrayList<VariantResult> result) {
-        this.result = result;
-    }
-    
 }

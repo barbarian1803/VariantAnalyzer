@@ -1,11 +1,12 @@
 package variantanalyzer;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class VariantFile {
-    private ArrayList<String> metadata;
-    private ArrayList<String> colNames;
-    private ArrayList<VariantResult> variantResult;
+    private List<String> metadata;
+    private List<String> colNames;
+    private List<VariantResult> variantResult;
 
     public VariantFile() {
         this.metadata = new ArrayList();
@@ -35,7 +36,7 @@ public class VariantFile {
         this.variantResult.add(entry);
     }
     
-    public ArrayList<String> getMetadata() {
+    public List<String> getMetadata() {
         return metadata;
     }
 
@@ -43,7 +44,7 @@ public class VariantFile {
         this.metadata = metadata;
     }
 
-    public ArrayList<String> getColNames() {
+    public List<String> getColNames() {
         return colNames;
     }
 
@@ -51,7 +52,7 @@ public class VariantFile {
         this.colNames = colNames;
     }
 
-    public ArrayList<VariantResult> getVariantResult() {
+    public List<VariantResult> getVariantResult() {
         return variantResult;
     }
 
