@@ -18,7 +18,11 @@ public class VariantResult {
     public Map<String, String> getItem() {
         return item;
     }
-
+    
+    public String getColValues(String key) {
+        return this.item.get(key);
+    }
+    
     public void setItem(Map<String, String> item) {
         this.item = item;
     }
