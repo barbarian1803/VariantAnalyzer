@@ -1,5 +1,7 @@
 package variantanalyzer;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,5 +62,24 @@ public class VariantFile {
         this.variantResult = variantResult;
     }
     
-    
+    public void printVCFtoFile(BufferedWriter bw) throws IOException{
+        for(String metadata:this.getMetadata()){
+            bw.write("##"+metadata+"\n");
+        }
+        bw.write("#");
+        for(String colnames: this.colNames){
+            bw.write(colnames+"\t");
+        }
+        bw.write("COORDINATES");
+        bw.write("\n");
+        for(Object obj:this.variantResult){
+            VariantResult result = (VariantResult) obj;
+            for(String colnames: this.colNames){
+                bw.write(result.getColValues(colnames)+"\t");
+            }
+            bw.write(result.getCoordinatesToString());
+            bw.write("\n");
+        }
+        
+    }
 }

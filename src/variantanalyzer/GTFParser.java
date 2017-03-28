@@ -39,7 +39,7 @@ public class GTFParser {
         return gtfFile;
     }
 
-    public static GTFEntry parseEntryLine(String line) {
+    private static GTFEntry parseEntryLine(String line) {
         GTFEntry entry = new GTFEntry();
         String[] splitted = line.split("\\t");
 
