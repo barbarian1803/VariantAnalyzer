@@ -15,6 +15,7 @@ public class TranscriptFASTA {
     public TranscriptFASTA(String metadata){
         this.transcriptID = this.parseMetadata(metadata);
         this.sequence = "";
+        transcriptExons = new HashMap();
     }
     
     private String parseMetadata(String metadata){
