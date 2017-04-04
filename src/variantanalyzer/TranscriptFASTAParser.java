@@ -4,8 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,6 +35,21 @@ public class TranscriptFASTAParser {
         return transcriptFile;
     }
     
-    
+    public static TranscriptFASTAFile AssignExonsPerTranscript(TranscriptFASTAFile transcriptFile, GTFFile gtfFile){
+        String[] chromosomeList = gtfFile.gethromosomeName();
+        for(String chromosome:chromosomeList){
+            List gtfEntriesInChromosome = gtfFile.getEntryInChromosome(chromosome);
+            for(Object obj:gtfEntriesInChromosome){
+                GTFEntry gtfEntry = (GTFEntry) obj;
+                String transcriptID = gtfEntry.getTranscriptID();
+                try{
+                    transcriptFile.getTranscript(transcriptID).addExon(gtfEntry.getExonID(), gtfEntry);
+                }catch(Exception ex){
+                    
+                }
+            }
+        }
+        return transcriptFile;
+    }
     
 }
