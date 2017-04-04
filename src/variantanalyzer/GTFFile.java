@@ -28,6 +28,17 @@ public class GTFFile {
         return this.gtfEntries.get(chrom);
     }
     
+    public String[] gethromosomeName(){
+        String[] chrName = new String[gtfEntries.keySet().size()];
+        int i=0;
+        for(Object key:gtfEntries.keySet()){
+            String chr = (String)key;
+            chrName[i]=chr;
+            i++;
+        }
+        return chrName;
+    }
+    
     public void printData(String key){
         if(this.gtfEntries.containsKey(key)){
             List data = this.gtfEntries.get(key);
