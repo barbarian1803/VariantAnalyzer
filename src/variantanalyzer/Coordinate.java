@@ -2,8 +2,8 @@ package variantanalyzer;
 
 public class Coordinate {
 
-    String transcriptID;
-    int exonID;
+    private String transcriptID;
+    private int exonID;
 
     public Coordinate(String transcriptID, int exonID) {
         this.transcriptID = transcriptID;
