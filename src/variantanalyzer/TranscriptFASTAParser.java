@@ -35,16 +35,43 @@ public class TranscriptFASTAParser {
         return transcriptFile;
     }
     
-    public static TranscriptFASTAFile AssignExonsPerTranscript(TranscriptFASTAFile transcriptFile, GTFFile gtfFile){
+    public static TranscriptFASTAFile AssignExonsPerTranscript(TranscriptFASTAFile transcriptFile, GTFFile gtfFile, int threadNumber){
         String[] chromosomeList = gtfFile.gethromosomeName();
         for(String chromosome:chromosomeList){
             List gtfEntriesInChromosome = gtfFile.getEntryInChromosome(chromosome);
-            for(Object obj:gtfEntriesInChromosome){
-                GTFEntry gtfEntry = (GTFEntry) obj;
-                String transcriptID = gtfEntry.getTranscriptID();
-                try{
-                    transcriptFile.getTranscript(transcriptID).addExon(gtfEntry.getExonID(), gtfEntry);
-                }catch(Exception ex){
+            
+            int splitSize = (int) Math.ceil(gtfEntriesInChromosome.size()/threadNumber);
+            Thread[] t = new Thread[threadNumber];
+            
+            for(int i=0;i<threadNumber;i++){
+                int startIdx = i * splitSize;
+                int stopIdx = startIdx + splitSize;
+
+                if (stopIdx > gtfEntriesInChromosome.size()) {
+                    stopIdx = gtfEntriesInChromosome.size();
+                }
+                List gtfEntriesSubList = gtfEntriesInChromosome.subList(startIdx, stopIdx);
+                t[i] =new Thread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        for(Object obj:gtfEntriesSubList){
+                            GTFEntry gtfEntry = (GTFEntry) obj;
+                            String transcriptID = gtfEntry.getTranscriptID();
+                            try{
+                                transcriptFile.getTranscript(transcriptID).addExon(gtfEntry.getExonID(), gtfEntry);
+                            }catch(Exception ex){
+
+                            }
+                        }
+                    }
+                });
+                t[i].start();
+            }
+            for(int i=0;i<threadNumber;i++){
+                try {
+                    t[i].join();
+                } catch (InterruptedException ex) {
                     
                 }
             }
