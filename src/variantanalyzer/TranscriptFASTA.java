@@ -69,4 +69,35 @@ public class TranscriptFASTA {
             this.transcriptExons.get((int)i).printEntry();
         }
     }
+    
+    public String applyVariant(VariantResult variant,int genotype,int exonID){
+        String alleleRef = variant.returnAlleleList()[0];
+        String variation = variant.returnAlleleList()[genotype];
+        
+        int pos = Integer.parseInt(variant.getColValues("POS"));
+        GTFEntry exon = transcriptExons.get(exonID);
+        
+        int offset = -1;
+        
+        if(exon.getStrand()=='+'){
+            offset = pos-exon.getStart()+1;
+        }else{
+            offset = pos-exon.getEnd()+1;
+        }
+        
+        int totalOffset = 0;
+        
+        for(int i:transcriptExons.keySet()){
+            if(i<exonID){
+                totalOffset = totalOffset+1+Math.abs(transcriptExons.get(i).getEnd()-transcriptExons.get(i).getStart());
+            }
+        }
+        
+        offset=offset+totalOffset;
+        
+        String preVariation = this.sequence.substring(0, offset);
+        String afterVariation = this.sequence.substring(offset+alleleRef.length());
+        String newSeq = preVariation+variation+afterVariation;
+        return newSeq;
+    }
 }
