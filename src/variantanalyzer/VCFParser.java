@@ -1,10 +1,14 @@
 package variantanalyzer;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -27,7 +31,7 @@ public class VCFParser {
 //            
 //        }
 //    }
-    
+
     public static VariantFile ReadVCF(String filename, int threadNumber) {
 
         VariantFile vcfFile = new VariantFile();
@@ -46,15 +50,16 @@ public class VCFParser {
                     tempData.add(line);
                 }
             }
-
             //multi threading process
             int splitSize = (int) Math.ceil(tempData.size() / threadNumber);
             VCFParserThread[] threads = new VCFParserThread[threadNumber];
 
             for (int i = 0; i < threadNumber; i++) {
                 int startIdx = i * splitSize;
-                int stopIdx = startIdx + splitSize - 1;
-
+                int stopIdx = startIdx + splitSize;
+                if (stopIdx > tempData.size()) {
+                    stopIdx = tempData.size();
+                }
                 threads[i] = new VCFParserThread(tempData.subList(startIdx, stopIdx), vcfFile.getColNames());
                 threads[i].start();
             }
@@ -64,11 +69,10 @@ public class VCFParser {
             }
 
             for (int i = 0; i < threadNumber; i++) {
-                vcfFile.getVariantResult().addAll(threads[i].getResult());
+                vcfFile.getAllVariantResult().addAll(threads[i].getResult());
             }
 
             reader.close();
-
             return vcfFile;
 
         } catch (Exception e) {
@@ -79,16 +83,23 @@ public class VCFParser {
     }
 
     public static VariantFile AssignVariantLocation(VariantFile vcfFile, GTFFile gtfFile, int threadNumber) {
-        List variantResult = vcfFile.getVariantResult();
+        List variantResult = vcfFile.getAllVariantResult();
         int splitSize = (int) Math.ceil(variantResult.size() / threadNumber);
         AssignVariationThread[] threads = new AssignVariationThread[threadNumber];
+        
         for (int i = 0; i < threadNumber; i++) {
+            
             int startIdx = i * splitSize;
-            int stopIdx = startIdx + splitSize - 1;
-
+            int stopIdx = startIdx + splitSize;
+            
+            if (stopIdx > variantResult.size()) {
+                stopIdx = variantResult.size();
+            }
+            
             threads[i] = new AssignVariationThread(variantResult.subList(startIdx, stopIdx), vcfFile.getColNames(), gtfFile);
             threads[i].start();
         }
+        
         for (int i = 0; i < threadNumber; i++) {
             try {
                 threads[i].join();
@@ -96,13 +107,13 @@ public class VCFParser {
                 //Logger.getLogger(VCFParser.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        
+
         vcfFile.setVariantResult(new ArrayList());
-        
+
         for (int i = 0; i < threadNumber; i++) {
-            vcfFile.getVariantResult().addAll(threads[i].getResult());
+            vcfFile.getAllVariantResult().addAll(threads[i].getResult());
         }
-        
+
         return vcfFile;
     }
 
@@ -124,23 +135,23 @@ public class VCFParser {
         public void run() {
             for (Object obj : variantResult) {
                 VariantResult result = (VariantResult) obj;
-                try{
+                try {
                     List gtfEntryInChromosome = gtfFile.getEntryInChromosome(result.getColValues("CHROM"));
                     //search algorithm here
                     for (Object objGTFEntry : gtfEntryInChromosome) {
-                        
+
                         GTFEntry gtfEntry = (GTFEntry) objGTFEntry;
                         int pos = Integer.parseInt(result.getColValues("POS"));
-                        
+
                         if (pos >= gtfEntry.getStart() && pos <= gtfEntry.getEnd()) {
                             result.addCoordinate(gtfEntry.getTranscriptID(), gtfEntry.getExonID());
                         }
                     }
-                    if(result.getCoordinates().size()>0){
+                    if (result.getCoordinates().size() > 0) {
                         variantResultOutput.add(result);
                     }
-                    
-                }catch(NullPointerException ex){
+
+                } catch (NullPointerException ex) {
                     //System.out.println(result.getColValues("CHROM"));
                 }
             }
@@ -183,5 +194,47 @@ public class VCFParser {
             return result;
         }
 
+    }
+
+    public static void TranscriptConsensusSequence(VariantFile vcfWithCoordinate, TranscriptFASTAFile fasta, String sampleName, String fileOutput) throws FileNotFoundException {
+        TranscriptFASTAFile fastaOutput = new TranscriptFASTAFile();
+        PrintWriter pw = new PrintWriter(new File(fileOutput));
+        for (int i = 0; i < vcfWithCoordinate.getVariantResultSize(); i++) {
+
+            VariantResult variant = vcfWithCoordinate.getVariantResult(i);
+            Set sampleGenotype = variant.returnGenotypeFromSample(sampleName);
+
+            for (int j = 0; j < variant.getCoordinates().size(); j++) {
+
+                Coordinate coord = variant.getCoordinates().get(j);
+                TranscriptFASTA transcript = fasta.getTranscript(coord.getTranscriptID());
+                
+                if(sampleGenotype.size()>1){
+                    System.out.println(coord.getTranscriptID()+" is heterozygous");
+                }
+                
+                for (Object obj : sampleGenotype) {
+
+                    int genotypeID = Integer.parseInt((String) obj);
+                    int exonID = coord.getExonID();
+
+                    String newMetadata = ">"+coord.getTranscriptID()+" genotype="+genotypeID;
+                    pw.write(newMetadata+"\n");
+                    try{
+                        String newFasta = transcript.applyVariant(variant, genotypeID, exonID);
+                        for(int xx=0;xx<=Math.ceil(newFasta.length() / 60);xx++){
+                            int start = xx*60;
+                            int end = start+60;
+                            if(end>newFasta.length()){
+                                end = newFasta.length();
+                            }
+                            pw.write(newFasta.substring(start,end)+"\n");
+                        }
+                    }catch(Exception ex){
+                        System.out.println("Transcript "+coord.getTranscriptID()+" fasta sequence is not found");
+                    }
+                }
+            }
+        }
     }
 }
