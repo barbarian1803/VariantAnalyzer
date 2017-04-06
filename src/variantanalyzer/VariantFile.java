@@ -1,7 +1,7 @@
 package variantanalyzer;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,15 +54,23 @@ public class VariantFile {
         this.colNames = colNames;
     }
 
-    public List<VariantResult> getVariantResult() {
+    public List<VariantResult> getAllVariantResult() {
         return variantResult;
     }
+    
+    public VariantResult getVariantResult(int i) {
+        return variantResult.get(i);
+    }
 
+    public int getVariantResultSize(){
+        return variantResult.size();
+    }
+    
     public void setVariantResult(ArrayList<VariantResult> variantResult) {
         this.variantResult = variantResult;
     }
     
-    public void printVCFtoFile(BufferedWriter bw) throws IOException{
+    public void printVCFtoFile(PrintWriter bw) throws IOException{
         for(String metadata:this.getMetadata()){
             bw.write("##"+metadata+"\n");
         }
