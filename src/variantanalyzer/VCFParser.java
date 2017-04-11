@@ -4,41 +4,24 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-/**
- *
- * @author barbarian
- */
 public class VCFParser {
-//    public static void sliceVCF() {
-//        try {
-//            BufferedReader reader = new BufferedReader(new FileReader("data/cancer.exome.vcf"));
-//            String line;
-//            PrintWriter writer = new PrintWriter("data/cancer.exome.chr1.vcf", "UTF-8");
-//            while ((line = reader.readLine()) != null) {
-//                if(line.startsWith("10")){
-//                    break;
-//                }
-//                writer.println(line);
-//            }
-//            writer.close();
-//        }catch(Exception ex){
-//            
-//        }
-//    }
 
     public static VariantFile ReadVCF(String filename, int threadNumber) {
 
         VariantFile vcfFile = new VariantFile();
         List<String> tempData = new ArrayList();
-
+        BufferedReader reader = null;
+        FileReader fr = null;
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(filename));
+            fr = new FileReader(filename);
+            reader = new BufferedReader(fr);
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("##")) {
@@ -51,7 +34,7 @@ public class VCFParser {
                 }
             }
             //multi threading process
-            int splitSize = (int) Math.ceil(tempData.size() / threadNumber);
+            int splitSize = (int) Math.ceil((double)tempData.size() / threadNumber);
             VCFParserThread[] threads = new VCFParserThread[threadNumber];
 
             for (int i = 0; i < threadNumber; i++) {
@@ -60,31 +43,45 @@ public class VCFParser {
                 if (stopIdx > tempData.size()) {
                     stopIdx = tempData.size();
                 }
-                threads[i] = new VCFParserThread(tempData.subList(startIdx, stopIdx), vcfFile.getColNames());
-                threads[i].start();
+                try{
+                    threads[i] = new VCFParserThread(tempData.subList(startIdx, stopIdx), vcfFile.getColNames());
+                    threads[i].start();
+                }catch(Exception e){
+                    
+                }
             }
 
             for (int i = 0; i < threadNumber; i++) {
-                threads[i].join();
+                try {
+                    threads[i].join();
+                } catch (InterruptedException | NullPointerException ex) {
+
+                }
             }
 
             for (int i = 0; i < threadNumber; i++) {
-                vcfFile.getAllVariantResult().addAll(threads[i].getResult());
+                if(threads[i]!=null)
+                    vcfFile.getAllVariantResult().addAll(threads[i].getResult());
+            }   
+
+        } catch (FileNotFoundException e) {
+
+        } catch (IOException e) {
+
+        }finally{
+            try {
+                fr.close();
+                reader.close();
+            } catch (IOException ex) {
+            
             }
-
-            reader.close();
-            return vcfFile;
-
-        } catch (Exception e) {
-            System.err.format("Exception occurred trying to read '%s'.", filename);
-            e.printStackTrace();
-            return null;
         }
+        return vcfFile;
     }
 
     public static VariantFile AssignVariantLocation(VariantFile vcfFile, GTFFile gtfFile, int threadNumber) {
         List variantResult = vcfFile.getAllVariantResult();
-        int splitSize = (int) Math.ceil(variantResult.size() / threadNumber);
+        int splitSize = (int) Math.ceil((double)variantResult.size() / threadNumber);
         AssignVariationThread[] threads = new AssignVariationThread[threadNumber];
         
         for (int i = 0; i < threadNumber; i++) {
@@ -95,28 +92,66 @@ public class VCFParser {
             if (stopIdx > variantResult.size()) {
                 stopIdx = variantResult.size();
             }
-            
-            threads[i] = new AssignVariationThread(variantResult.subList(startIdx, stopIdx), vcfFile.getColNames(), gtfFile);
-            threads[i].start();
+            try{
+                threads[i] = new AssignVariationThread(variantResult.subList(startIdx, stopIdx), vcfFile.getColNames(), gtfFile);
+                threads[i].start();
+            }catch(Exception e){
+                
+            }
         }
         
         for (int i = 0; i < threadNumber; i++) {
             try {
                 threads[i].join();
-            } catch (InterruptedException ex) {
-                //Logger.getLogger(VCFParser.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (InterruptedException | NullPointerException ex) {
+
             }
         }
 
         vcfFile.setVariantResult(new ArrayList());
 
         for (int i = 0; i < threadNumber; i++) {
-            vcfFile.getAllVariantResult().addAll(threads[i].getResult());
+            if(threads[i]!=null)
+                vcfFile.getAllVariantResult().addAll(threads[i].getResult());
         }
 
         return vcfFile;
     }
 
+    public static void TranscriptConsensusSequence(VariantFile vcfWithCoordinate, TranscriptFASTAFile fasta, String sampleName, String fileOutput) throws FileNotFoundException {
+        TranscriptFASTAFile fastaOutput = new TranscriptFASTAFile();
+        
+        for (int i = 0; i < vcfWithCoordinate.getVariantResultSize(); i++) {
+
+            VariantResult variant = vcfWithCoordinate.getVariantResult(i);
+            Set<String> sampleGenotype = variant.returnGenotypeFromSample(sampleName);
+
+            for (int j = 0; j < variant.getCoordinates().size(); j++) {
+
+                Coordinate coord = variant.getCoordinates().get(j);
+                TranscriptFASTA transcript = fasta.getTranscript(coord.getTranscriptID());
+                                
+                for (String obj : sampleGenotype) {
+
+                    int genotypeID = Integer.parseInt(obj);
+                    int exonID = coord.getExonID();
+
+                    try{
+                        transcript.applyVariant(variant, genotypeID, exonID);
+                    }catch(Exception ex){
+                        
+                    }
+                }
+            }
+        }
+        PrintWriter pw = new PrintWriter(new File(fileOutput));
+        
+        
+        pw.close();
+    }
+    
+    //NESTED CLASS FOR THREAD
+    
     private static class AssignVariationThread extends Thread {
 
         GTFFile gtfFile;
@@ -194,47 +229,5 @@ public class VCFParser {
             return result;
         }
 
-    }
-
-    public static void TranscriptConsensusSequence(VariantFile vcfWithCoordinate, TranscriptFASTAFile fasta, String sampleName, String fileOutput) throws FileNotFoundException {
-        TranscriptFASTAFile fastaOutput = new TranscriptFASTAFile();
-        PrintWriter pw = new PrintWriter(new File(fileOutput));
-        for (int i = 0; i < vcfWithCoordinate.getVariantResultSize(); i++) {
-
-            VariantResult variant = vcfWithCoordinate.getVariantResult(i);
-            Set sampleGenotype = variant.returnGenotypeFromSample(sampleName);
-
-            for (int j = 0; j < variant.getCoordinates().size(); j++) {
-
-                Coordinate coord = variant.getCoordinates().get(j);
-                TranscriptFASTA transcript = fasta.getTranscript(coord.getTranscriptID());
-                
-                if(sampleGenotype.size()>1){
-                    System.out.println(coord.getTranscriptID()+" is heterozygous");
-                }
-                
-                for (Object obj : sampleGenotype) {
-
-                    int genotypeID = Integer.parseInt((String) obj);
-                    int exonID = coord.getExonID();
-
-                    String newMetadata = ">"+coord.getTranscriptID()+" genotype="+genotypeID;
-                    pw.write(newMetadata+"\n");
-                    try{
-                        String newFasta = transcript.applyVariant(variant, genotypeID, exonID);
-                        for(int xx=0;xx<=Math.ceil(newFasta.length() / 60);xx++){
-                            int start = xx*60;
-                            int end = start+60;
-                            if(end>newFasta.length()){
-                                end = newFasta.length();
-                            }
-                            pw.write(newFasta.substring(start,end)+"\n");
-                        }
-                    }catch(Exception ex){
-                        System.out.println("Transcript "+coord.getTranscriptID()+" fasta sequence is not found");
-                    }
-                }
-            }
-        }
     }
 }
