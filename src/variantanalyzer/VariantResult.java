@@ -69,9 +69,12 @@ public class VariantResult {
         return retval;
     }
         
-    public Set returnGenotypeFromSample(String sample){
-        String alleleCol = this.getColValues(sample).split(":")[0];
+    public Set<String> returnGenotypeFromSample(String sample){
+        String[] GTPL  = this.getColValues(sample).split(":");
         
+        String alleleCol = GTPL[0];
+        String PL = GTPL[1];
+                
         String[] alleleID = alleleCol.split("/|\\|");
         Set<String> retVal = new HashSet();
         for(String i:alleleID){
@@ -82,5 +85,13 @@ public class VariantResult {
             }
         }
         return retVal;
+    }
+    
+    public String[] returnPLFromSample(String sample){
+        String[] GTPL  = this.getColValues(sample).split(":");
+        
+        String PL = GTPL[1];
+
+        return PL.split(",");
     }
 }
