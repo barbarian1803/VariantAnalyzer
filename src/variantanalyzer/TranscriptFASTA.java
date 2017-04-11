@@ -82,9 +82,9 @@ public class TranscriptFASTA {
         if(exon.getStrand()=='+'){
             offset = pos-exon.getStart()+1;
         }else{
-            offset = pos-exon.getEnd()+1;
+            int startIdx = (pos+alleleRef.length())-1;
+            offset = 1+(exon.getEnd()-startIdx);
         }
-        
         int totalOffset = 0;
         
         for(int i:transcriptExons.keySet()){
@@ -92,12 +92,38 @@ public class TranscriptFASTA {
                 totalOffset = totalOffset+1+Math.abs(transcriptExons.get(i).getEnd()-transcriptExons.get(i).getStart());
             }
         }
-        
         offset=offset+totalOffset;
         
         String preVariation = this.sequence.substring(0, offset);
         String afterVariation = this.sequence.substring(offset+alleleRef.length());
+        
+        if(exon.getStrand()=='-'){
+            variation = reverseComplement(variation);
+        }
+        
         String newSeq = preVariation+variation+afterVariation;
         return newSeq;
+    }
+    
+    private String reverseComplement(String s){
+        String retval="";
+        
+        for (int i = 0; i < s.length(); i++){
+            char c = s.charAt(i);        
+            if(c=='A'){
+                retval = 'T'+retval;
+            }
+            if(c=='T'){
+                retval = 'A'+retval;
+            }
+            if(c=='C'){
+                retval = 'G'+retval;
+            }
+            if(c=='G'){
+                retval = 'C'+retval;
+            }
+        }
+        
+        return retval;
     }
 }
