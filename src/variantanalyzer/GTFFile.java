@@ -24,7 +24,7 @@ public class GTFFile {
         }
     }
     
-    public List getEntryInChromosome(String chrom){
+    public List<GTFEntry> getEntryInChromosome(String chrom){
         return this.gtfEntries.get(chrom);
     }
     
@@ -39,11 +39,10 @@ public class GTFFile {
         return chrName;
     }
     
-    public void printData(String key){
-        if(this.gtfEntries.containsKey(key)){
-            List data = this.gtfEntries.get(key);
-            for(Object item:data){
-                GTFEntry itemEntry = (GTFEntry)item;
+    public void printData(String chromosome){
+        if(this.gtfEntries.containsKey(chromosome)){
+            List<GTFEntry> data = this.gtfEntries.get(chromosome);
+            for(GTFEntry itemEntry:data){
                 System.out.println(itemEntry.getChromosome()+" "+itemEntry.getStart()+"-"+itemEntry.getEnd()+" : "+itemEntry.getTranscriptID()+"-"+itemEntry.getExonID());
             }
         }

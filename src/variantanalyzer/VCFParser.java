@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class VCFParser {
@@ -60,8 +62,11 @@ public class VCFParser {
             }
 
             for (int i = 0; i < threadNumber; i++) {
-                if(threads[i]!=null)
+                try{
                     vcfFile.getAllVariantResult().addAll(threads[i].getResult());
+                } catch (NullPointerException ex) {
+
+                }
             }   
 
         } catch (FileNotFoundException e) {
@@ -80,7 +85,7 @@ public class VCFParser {
     }
 
     public static VariantFile AssignVariantLocation(VariantFile vcfFile, GTFFile gtfFile, int threadNumber) {
-        List variantResult = vcfFile.getAllVariantResult();
+        List<VariantResult> variantResult = vcfFile.getAllVariantResult();
         int splitSize = (int) Math.ceil((double)variantResult.size() / threadNumber);
         AssignVariationThread[] threads = new AssignVariationThread[threadNumber];
         
@@ -111,11 +116,51 @@ public class VCFParser {
         vcfFile.setVariantResult(new ArrayList());
 
         for (int i = 0; i < threadNumber; i++) {
-            if(threads[i]!=null)
+            try {
                 vcfFile.getAllVariantResult().addAll(threads[i].getResult());
+            } catch (NullPointerException ex) {
+
+            }
         }
 
         return vcfFile;
+    }
+    
+    public static Map<String, VariantResult> AssignVariantToExon(VariantFile vcfFile, GTFFile gtfFile, int threadNumber) {
+        Map<String, VariantResult> output = new HashMap();
+        List<VariantResult> variantResult = vcfFile.getAllVariantResult();
+        int splitSize = (int) Math.ceil((double)variantResult.size() / threadNumber);
+        AssignVariationToExonThread[] threads = new AssignVariationToExonThread[threadNumber];
+        
+        for (int i = 0; i < threadNumber; i++) {
+            
+            int startIdx = i * splitSize;
+            int stopIdx = startIdx + splitSize;
+            
+            if (stopIdx > variantResult.size()) {
+                stopIdx = variantResult.size();
+            }
+            try{
+                threads[i] = new AssignVariationToExonThread(variantResult.subList(startIdx, stopIdx), vcfFile.getColNames(), gtfFile);
+                threads[i].start();
+            }catch(Exception e){
+                
+            }
+        }
+        
+        for (int i = 0; i < threadNumber; i++) {
+            try {
+                threads[i].join();
+            } catch (InterruptedException | NullPointerException ex) {
+
+            }
+        }
+        //merge result of each thread to output
+        for (int i = 0; i < threadNumber; i++) {
+            
+        }
+        
+        return output;
     }
 
     public static void TranscriptConsensusSequence(VariantFile vcfWithCoordinate, TranscriptFASTAFile fasta, String sampleName, String fileOutput) throws FileNotFoundException {
@@ -150,7 +195,7 @@ public class VCFParser {
         pw.close();
     }
     
-    //NESTED CLASS FOR THREAD
+    //NESTED CLASSES FOR THREAD
     
     private static class AssignVariationThread extends Thread {
 
@@ -171,13 +216,10 @@ public class VCFParser {
             for (Object obj : variantResult) {
                 VariantResult result = (VariantResult) obj;
                 try {
-                    List gtfEntryInChromosome = gtfFile.getEntryInChromosome(result.getColValues("CHROM"));
-                    //search algorithm here
-                    for (Object objGTFEntry : gtfEntryInChromosome) {
+                    List<GTFEntry> gtfEntryInChromosome = gtfFile.getEntryInChromosome(result.getColValues("CHROM"));
+                    for (GTFEntry gtfEntry : gtfEntryInChromosome) {
 
-                        GTFEntry gtfEntry = (GTFEntry) objGTFEntry;
                         int pos = Integer.parseInt(result.getColValues("POS"));
-
                         if (pos >= gtfEntry.getStart() && pos <= gtfEntry.getEnd()) {
                             result.addCoordinate(gtfEntry.getTranscriptID(), gtfEntry.getExonID());
                         }
@@ -185,15 +227,55 @@ public class VCFParser {
                     if (result.getCoordinates().size() > 0) {
                         variantResultOutput.add(result);
                     }
-
                 } catch (NullPointerException ex) {
-                    //System.out.println(result.getColValues("CHROM"));
+                    
                 }
             }
         }
 
         public List<VariantResult> getResult() {
             return this.variantResultOutput;
+        }
+    }
+    
+    private static class AssignVariationToExonThread extends Thread {
+
+        GTFFile gtfFile;
+        List<VariantResult> variantResult;
+        List colnames;
+        Map<String,List<VariantResult>> exonListWithVariation;
+
+        public AssignVariationToExonThread(List<VariantResult> variantResult, List colnames, GTFFile gtfFile) {
+            this.gtfFile = gtfFile;
+            this.colnames = colnames;
+            this.variantResult = variantResult;
+            this.exonListWithVariation = new HashMap<>();
+        }
+
+        @Override
+        public void run() {
+            for (VariantResult result : variantResult) {
+                try {
+                    List<GTFEntry> gtfEntryInChromosome = gtfFile.getEntryInChromosome(result.getColValues("CHROM"));
+                    for (GTFEntry gtfEntry : gtfEntryInChromosome) {
+
+                        int pos = Integer.parseInt(result.getColValues("POS"));
+                        if (pos >= gtfEntry.getStart() && pos <= gtfEntry.getEnd()) {
+                            String key = gtfEntry.getTranscriptID()+"_"+gtfEntry.getExonID();
+                            if(!exonListWithVariation.containsKey(key)){
+                                exonListWithVariation.put(key, new ArrayList());
+                            }
+                            exonListWithVariation.get(key).add(result);
+                        }
+                    }
+                } catch (NullPointerException ex) {
+                    
+                }
+            }
+        }
+
+        public Map<String,List<VariantResult>> getResult() {
+            return this.exonListWithVariation;
         }
     }
 
