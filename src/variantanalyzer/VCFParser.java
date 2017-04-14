@@ -1,17 +1,14 @@
 package variantanalyzer;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class VCFParser {
 
@@ -126,8 +123,8 @@ public class VCFParser {
         return vcfFile;
     }
     
-    public static Map<String, VariantResult> AssignVariantToExon(VariantFile vcfFile, GTFFile gtfFile, int threadNumber) {
-        Map<String, VariantResult> output = new HashMap();
+    public static Map<String, List<VariantResult>> AssignVariantToExon(VariantFile vcfFile, GTFFile gtfFile, int threadNumber) {
+        Map<String, List<VariantResult>> output = new HashMap();
         List<VariantResult> variantResult = vcfFile.getAllVariantResult();
         int splitSize = (int) Math.ceil((double)variantResult.size() / threadNumber);
         AssignVariationToExonThread[] threads = new AssignVariationToExonThread[threadNumber];
@@ -157,42 +154,111 @@ public class VCFParser {
         }
         //merge result of each thread to output
         for (int i = 0; i < threadNumber; i++) {
-            
+            for(String key:threads[i].getResult().keySet()){
+                if(!output.containsKey(key)){
+                    output.put(key, new ArrayList<>());
+                }
+                List listFromKey = threads[i].getResult().get(key);
+                output.get(key).addAll(listFromKey);
+            }
         }
         
         return output;
     }
 
-    public static void TranscriptConsensusSequence(VariantFile vcfWithCoordinate, TranscriptFASTAFile fasta, String sampleName, String fileOutput) throws FileNotFoundException {
-        TranscriptFASTAFile fastaOutput = new TranscriptFASTAFile();
+//    public static void TranscriptConsensusSequence(VariantFile vcfWithCoordinate, TranscriptFASTAFile fasta, String sampleName, String fileOutput) throws FileNotFoundException {
+//        TranscriptFASTAFile fastaOutput = new TranscriptFASTAFile();
+//        
+//        for (int i = 0; i < vcfWithCoordinate.getVariantResultSize(); i++) {
+//
+//            VariantResult variant = vcfWithCoordinate.getVariantResult(i);
+//            Set<String> sampleGenotype = variant.returnGenotypeFromSample(sampleName);
+//
+//            for (int j = 0; j < variant.getCoordinates().size(); j++) {
+//
+//                Coordinate coord = variant.getCoordinates().get(j);
+//                TranscriptFASTA transcript = fasta.getTranscriptFASTA(coord.getTranscriptID());
+//                                
+//                for (String obj : sampleGenotype) {
+//
+//                    int genotypeID = Integer.parseInt(obj);
+//                    int exonID = coord.getExonID();
+//
+//                    try{
+//                        transcript.applyVariant(variant, genotypeID, exonID);
+//                    }catch(Exception ex){
+//                        
+//                    }
+//                }
+//            }
+//        }
+//        PrintWriter pw = new PrintWriter(new File(fileOutput));
+//        
+//        
+//        pw.close();
+//    }
+    
+    public static void TranscriptConsensusSequence(Map<String, List<VariantResult>> variantPerExon, TranscriptFASTAFile fasta, String sampleName, String fileOutput) throws FileNotFoundException {
         
-        for (int i = 0; i < vcfWithCoordinate.getVariantResultSize(); i++) {
+        for (String transcriptID:fasta.getTranscriptList()) {
+            TranscriptFASTA fastaTranscript = fasta.getTranscriptFASTA(transcriptID);
+            
+            VariantFASTA variantFasta = new VariantFASTA();
+            variantFasta.addSequences(new VariantFASTASequence(fastaTranscript.getSequence(), 0));
+            
+            for(int exonNumber:fastaTranscript.getExonNumber()){
+                try{
+                    for(VariantResult variant:variantPerExon.get(transcriptID+"_"+exonNumber)){
+                        String[] genotypes = variant.returnGenotypeFromSample(sampleName);
+                        int pos = Integer.parseInt(variant.getColValues("POS"));
+                        String alleleRef = variant.returnAlleleList()[0];
+                        if(genotypes.length>1){
+                            //heterozygous
+                            List<VariantFASTASequence> temp = new ArrayList<>();
+                            for(int i=0;i<variantFasta.getSequences().size();i++){
+                                String seq = variantFasta.getSequence(i).getSequence();
+                                int offset = TranscriptFASTA.ChromPosToTranscriptOffset(fastaTranscript, pos, exonNumber, alleleRef, variantFasta.getSequence(i));
+                                int offsetWithIndel = TranscriptFASTA.IndelAdjustedTranscriptOffset(offset, variantFasta.getSequence(i));
+                                String alleleAlt1 = variant.returnAlleleList()[Integer.parseInt(genotypes[0])];
+                                String alleleAlt2 = variant.returnAlleleList()[Integer.parseInt(genotypes[1])];
 
-            VariantResult variant = vcfWithCoordinate.getVariantResult(i);
-            Set<String> sampleGenotype = variant.returnGenotypeFromSample(sampleName);
+                                String seqWithVariation1 = fastaTranscript.applyVariant(seq,alleleRef,alleleAlt1, exonNumber, offsetWithIndel);
+                                String seqWithVariation2 = fastaTranscript.applyVariant(seq,alleleRef,alleleAlt2, exonNumber, offsetWithIndel);
 
-            for (int j = 0; j < variant.getCoordinates().size(); j++) {
+                                variantFasta.getSequence(i).setSequence(seqWithVariation1);
+                                variantFasta.getSequence(i).addVariantOffset(offset, alleleRef.length(), alleleAlt1.length());
 
-                Coordinate coord = variant.getCoordinates().get(j);
-                TranscriptFASTA transcript = fasta.getTranscript(coord.getTranscriptID());
-                                
-                for (String obj : sampleGenotype) {
 
-                    int genotypeID = Integer.parseInt(obj);
-                    int exonID = coord.getExonID();
+                                VariantFASTASequence newlyAdded = new VariantFASTASequence(seqWithVariation2, variantFasta.getSequences().get(i).getHeteroZygousNumber()+1);
 
-                    try{
-                        transcript.applyVariant(variant, genotypeID, exonID);
-                    }catch(Exception ex){
-                        
+                                newlyAdded.getHeterozygousPos().addAll(variantFasta.getSequences().get(i).getHeterozygousPos());
+                                newlyAdded.addHeterozygousPos(Integer.parseInt(variant.getColValues("POS")));
+                                newlyAdded.addVariantOffset(offset, alleleRef.length(), alleleAlt2.length());
+                                temp.add(newlyAdded);
+                            }
+                            variantFasta.getSequences().addAll(temp);
+                        }else{
+                            //homozygous
+                            for(int i=0;i<variantFasta.getSequences().size();i++){
+                                int offset = TranscriptFASTA.ChromPosToTranscriptOffset(fastaTranscript, pos, exonNumber, alleleRef, variantFasta.getSequence(i));
+                                int offsetWithIndel = TranscriptFASTA.IndelAdjustedTranscriptOffset(offset, variantFasta.getSequence(i));
+                                String alleleAlt1 = variant.returnAlleleList()[Integer.parseInt(genotypes[0])];
+                                String seq = variantFasta.getSequences().get(i).getSequence();
+                                String seqWithVariation = fastaTranscript.applyVariant(seq,alleleRef,alleleAlt1, exonNumber, offsetWithIndel);
+                                variantFasta.getSequences().get(i).setSequence(seqWithVariation);
+                                variantFasta.getSequence(i).addVariantOffset(offset, alleleRef.length(), alleleAlt1.length());
+                            }
+                        }
                     }
+                }catch(NullPointerException ex){
+                    
                 }
             }
+            System.out.println(variantFasta.getSequences().size());
+            for(VariantFASTASequence seq:variantFasta.getSequences()){
+                System.out.println(seq.getSequence());
+            }
         }
-        PrintWriter pw = new PrintWriter(new File(fileOutput));
-        
-        
-        pw.close();
     }
     
     //NESTED CLASSES FOR THREAD

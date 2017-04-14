@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,7 +22,7 @@ public class TranscriptFASTAParser {
                     transcriptFile.addTranscript(transcript.getTranscriptID(), transcript);
                     currentTranscript = transcript.getTranscriptID();
                 } else {
-                    transcriptFile.getTranscript(currentTranscript).appendSequence(line);
+                    transcriptFile.getTranscriptFASTA(currentTranscript).appendSequence(line);
                 }
             }
             reader.close();
@@ -59,7 +58,7 @@ public class TranscriptFASTAParser {
                             GTFEntry gtfEntry = (GTFEntry) obj;
                             String transcriptID = gtfEntry.getTranscriptID();
                             try{
-                                transcriptFile.getTranscript(transcriptID).addExon(gtfEntry.getExonID(), gtfEntry);
+                                transcriptFile.getTranscriptFASTA(transcriptID).addExon(gtfEntry.getExonID(), gtfEntry);
                             }catch(Exception ex){
 
                             }
@@ -77,6 +76,5 @@ public class TranscriptFASTAParser {
             }
         }
         return transcriptFile;
-    }
-    
+    }  
 }

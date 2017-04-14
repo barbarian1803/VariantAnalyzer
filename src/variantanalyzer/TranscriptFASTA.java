@@ -2,6 +2,7 @@ package variantanalyzer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -59,6 +60,14 @@ public class TranscriptFASTA {
         this.transcriptExons.put(key,exon);
     }
     
+    public Set<Integer> getExonNumber(){
+        return this.transcriptExons.keySet();
+    }
+    
+    public GTFEntry getExon(int i){
+        return this.transcriptExons.get(i);
+    }
+    
     public void printData(){
         System.out.println(this.transcriptID);
         System.out.println("Strand: "+this.strand);
@@ -70,15 +79,21 @@ public class TranscriptFASTA {
         }
     }
     
-    public String applyVariant(VariantResult variant,int genotype,int exonID){
-        String alleleRef = variant.returnAlleleList()[0];
-        String variation = variant.returnAlleleList()[genotype];
+    public String applyVariant(String sequence, String alleleRef,String variation,int exonID, int offset){
+        String preVariation = sequence.substring(0, offset);
+        String afterVariation = sequence.substring(offset+alleleRef.length());
         
-        int pos = Integer.parseInt(variant.getColValues("POS"));
-        GTFEntry exon = transcriptExons.get(exonID);
-        
+        if(transcriptExons.get(exonID).getStrand()=='-'){
+            variation = TranscriptFASTA.ReverseComplement(variation);
+        }
+
+        String newSeq = preVariation+variation+afterVariation;
+        return newSeq;
+    }
+    
+    public static int ChromPosToTranscriptOffset(TranscriptFASTA transcript,int pos, int exonID, String alleleRef, VariantFASTASequence variantFASTA){
         int offset = -1;
-        
+        GTFEntry exon = transcript.getExon(exonID);
         if(exon.getStrand()=='+'){
             offset = pos-exon.getStart()+1;
         }else{
@@ -87,25 +102,26 @@ public class TranscriptFASTA {
         }
         int totalOffset = 0;
         
-        for(int i:transcriptExons.keySet()){
+        for(int i:transcript.getExonNumber()){
             if(i<exonID){
-                totalOffset = totalOffset+1+Math.abs(transcriptExons.get(i).getEnd()-transcriptExons.get(i).getStart());
+                totalOffset = totalOffset+1+Math.abs(transcript.getExon(i).getEnd()-transcript.getExon(i).getStart());
             }
         }
         offset=offset+totalOffset;
-        
-        String preVariation = this.sequence.substring(0, offset);
-        String afterVariation = this.sequence.substring(offset+alleleRef.length());
-        
-        if(exon.getStrand()=='-'){
-            variation = reverseComplement(variation);
-        }
-        
-        String newSeq = preVariation+variation+afterVariation;
-        return newSeq;
+        return offset-1;
     }
     
-    private String reverseComplement(String s){
+    public static int IndelAdjustedTranscriptOffset(int offset, VariantFASTASequence variantFASTA){
+        Map<Integer,Integer> recordedIndel = variantFASTA.getVariantPos();
+        for(int preOffset:recordedIndel.keySet()){
+            if(preOffset<=offset){
+                offset+=recordedIndel.get(preOffset);
+            }
+        }
+        return offset;
+    }
+    
+    public static String ReverseComplement(String s){
         String retval="";
         
         for (int i = 0; i < s.length(); i++){

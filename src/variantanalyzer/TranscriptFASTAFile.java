@@ -14,7 +14,13 @@ public class TranscriptFASTAFile {
         this.transripts.put(key, value);
     }
     
-    public TranscriptFASTA getTranscript(String transcript){
+    public TranscriptFASTA getTranscriptFASTA(String transcript){
         return this.transripts.get(transcript);
+    }
+    
+    public String[] getTranscriptList(){
+        String[] output = new String[this.transripts.keySet().size()];
+        
+        return this.transripts.keySet().toArray(output);
     }
 }

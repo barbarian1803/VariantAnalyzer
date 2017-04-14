@@ -1,18 +1,3 @@
-/*
- * Copyright 2017 bharata.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package variantanalyzer;
 
 import java.util.ArrayList;
@@ -23,24 +8,26 @@ import java.util.List;
  * @author bharata
  */
 public class VariantFASTA {
-    private String metadata;
-    private List<Integer> heterozygousPosition;
     private List<VariantFASTASequence> possibleSequences;
-    private String[] diploidPairs;
     
     public VariantFASTA(){
-        heterozygousPosition = new ArrayList<>();
         possibleSequences = new ArrayList<>();
     }
     
-    
-    private class VariantFASTASequence{
-        private List<Integer> heterozygousPos;
-        private String sequence;
-        
-        public VariantFASTASequence(){
-            heterozygousPos = new ArrayList<>();
-            sequence = "";
-        }
+    public List<VariantFASTASequence> getSequences(){
+        return this.possibleSequences;
     }
+    
+    public VariantFASTASequence getSequence(int i){
+        return this.possibleSequences.get(i);
+    }
+    
+    public void addSequences(VariantFASTASequence seq){
+        this.possibleSequences.add(seq);
+    }
+    
+    public VariantFASTASequence setSequence(int i,VariantFASTASequence seq){
+        return this.possibleSequences.set(i, seq);
+    }
+    
 }

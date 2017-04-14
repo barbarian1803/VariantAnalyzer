@@ -69,7 +69,7 @@ public class VariantResult {
         return retval;
     }
         
-    public Set<String> returnGenotypeFromSample(String sample){
+    public String[] returnGenotypeFromSample(String sample){
         String[] GTPL  = this.getColValues(sample).split(":");
         
         String alleleCol = GTPL[0];
@@ -84,12 +84,11 @@ public class VariantResult {
                 retVal.add(i);
             }
         }
-        return retVal;
+        return retVal.toArray(new String[retVal.size()]);
     }
     
     public String[] returnPLFromSample(String sample){
         String[] GTPL  = this.getColValues(sample).split(":");
-        
         String PL = GTPL[1];
 
         return PL.split(",");

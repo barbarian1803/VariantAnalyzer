@@ -1,8 +1,8 @@
 package variantanalyzer;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -24,18 +24,9 @@ public class MainClassTest {
         
         //Assign exon list to transcript sequence
         TranscriptFASTAFile transcriptWithExons = TranscriptFASTAParser.AssignExonsPerTranscript(transcripts,gtf,threadNumber);
-       
-//        Assign variant location to corresponding annotation
-        VariantFile vcfOut = VCFParser.AssignVariantLocation(vcf, gtf, threadNumber);
         
-        vcf.getVariantResult(0).printVariant();
-        vcf.getVariantResult(1).printVariant();
-        vcf.getVariantResult(2).printVariant();
         
-//        try {
-//            VCFParser.TranscriptConsensusSequence(vcfOut, transcriptWithExons, "33","data/consensus.fa");
-//        } catch (FileNotFoundException ex) {
-//            
-//        }
+        Map<String, List<VariantResult>> variantPerExon = VCFParser.AssignVariantToExon(vcf, gtf, threadNumber);
+        VCFParser.TranscriptConsensusSequence(variantPerExon, transcriptWithExons, "19","data/consensus.fa");
     }
 }

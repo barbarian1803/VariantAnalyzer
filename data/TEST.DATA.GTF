@@ -6,3 +6,4 @@
 1	havana	exon	1000	1009	.	+	.	gene_id "ENSG001";transcript_id "ENST001";exon_number "1";gene_name "Gene_1";
 1	havana	exon	1020	1029	.	+	.	gene_id "ENSG001";transcript_id "ENST001";exon_number "2";gene_name "Gene_1";
 1	havana	exon	1041	1080	.	+	.	gene_id "ENSG001";transcript_id "ENST001";exon_number "3";gene_name "Gene_1";
+1	havana	exon	1926	1935	.	+	.	gene_id "ENSG002";transcript_id "ENST002";exon_number "1";gene_name "Gene_2";
