@@ -214,6 +214,7 @@ public class VCFParser {
                         String alleleRef = variant.returnAlleleList()[0];
                         if(genotypes.length>1){
                             //heterozygous
+                            variantFasta.addTotatheterozygous();
                             List<VariantFASTASequence> temp = new ArrayList<>();
                             for(int i=0;i<variantFasta.getSequences().size();i++){
                                 String seq = variantFasta.getSequence(i).getSequence();
@@ -254,10 +255,8 @@ public class VCFParser {
                     
                 }
             }
-            System.out.println(variantFasta.getSequences().size());
-            for(VariantFASTASequence seq:variantFasta.getSequences()){
-                System.out.println(seq.getSequence());
-            }
+            
+            variantFasta.printfastaSequence(fastaTranscript.getMetadataOriginal());
         }
     }
     

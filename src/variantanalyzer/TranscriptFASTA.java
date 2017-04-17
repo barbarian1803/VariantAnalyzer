@@ -13,13 +13,22 @@ public class TranscriptFASTA {
     private String transcriptID;
     private int strand;
     private Map<Integer,GTFEntry> transcriptExons;
-    
+    private String metadataOriginal;
     
     public TranscriptFASTA(String metadata){
+        this.metadataOriginal = metadata;
         this.transcriptID = this.parseTranscriptID(metadata);
         this.strand = this.parseStrand(metadata);
         this.sequence = "";
         transcriptExons = new HashMap();
+    }
+
+    public String getMetadataOriginal() {
+        return metadataOriginal;
+    }
+
+    public void setMetadataOriginal(String metadataOriginal) {
+        this.metadataOriginal = metadataOriginal;
     }
     
     private String parseTranscriptID(String metadata){
