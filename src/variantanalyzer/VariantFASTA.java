@@ -1,5 +1,6 @@
 package variantanalyzer;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,7 +22,7 @@ public class VariantFASTA {
         totalHeterozygous = 0;
     }
     
-    public void addTotatheterozygous(){
+    public void addTotalHeterozygous(){
         totalHeterozygous++;
     }
     
@@ -65,22 +66,32 @@ public class VariantFASTA {
         }
     }
     
-    public void printfastaSequence(String oriMetadata){
+    public void printfastaSequence(String oriMetadata,PrintWriter pw){
         //generate new metadata by appending heterozygous pair information
         //example : >ENST001.1 cdna chromosome:GRCh38:1:1000:1080:1 gene:ENSG001.1 pair:1 allele=1
         //example : >ENST001.1 cdna chromosome:GRCh38:1:1000:1080:1 gene:ENSG001.1 pair:1 allele=2
         //example : >ENST001.1 cdna chromosome:GRCh38:1:1000:1080:1 gene:ENSG001.1 pair:2 allele=1
         //etc
         calculatePair();
+        if(possibleSequences.size()==1){
+            pw.write(oriMetadata+" pair:1 allele:1");
+            pw.write("\n");
+            pw.write(possibleSequences.get(0).getSequence());
+            pw.write("\n");
+            return;
+        }
         int noPair = 1;
         for(String s:possiblePair){
             String[] pairs = s.split("-");
-            System.out.println(oriMetadata+" pair:"+noPair+" allele:1");
-            System.out.println(possibleSequences.get(Integer.parseInt(pairs[0])).getSequence());
-            System.out.println(oriMetadata+" pair:"+noPair+" allele:2");
-            System.out.println(possibleSequences.get(Integer.parseInt(pairs[1])).getSequence());
+            pw.write(oriMetadata+" pair:"+noPair+" allele:1");
+            pw.write("\n");
+            pw.write(possibleSequences.get(Integer.parseInt(pairs[0])).getSequence());
+            pw.write("\n");
+            pw.write(oriMetadata+" pair:"+noPair+" allele:2");
+            pw.write("\n");
+            pw.write(possibleSequences.get(Integer.parseInt(pairs[1])).getSequence());
+            pw.write("\n");
             noPair++;
         }
     }
-    
 }
