@@ -1,5 +1,9 @@
-package variantanalyzer;
+package VCF;
 
+import TranscriptFASTA.TranscriptFASTAFile;
+import TranscriptFASTA.TranscriptFASTA;
+import GTF.GTFEntry;
+import GTF.GTFFile;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import TranscriptFASTA.VariantFASTA;
+import TranscriptFASTA.VariantFASTASequence;
 
 public class VCFParser {
 

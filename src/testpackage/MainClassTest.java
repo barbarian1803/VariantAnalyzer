@@ -1,13 +1,20 @@
-package variantanalyzer;
+package testpackage;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import GTF.GTFFile;
+import GTF.GTFParser;
+import TranscriptFASTA.TranscriptFASTA;
+import TranscriptFASTA.TranscriptFASTAFile;
+import TranscriptFASTA.TranscriptFASTAParser;
+import VCF.VCFParser;
+import VCF.VariantFile;
+import VCF.VariantResult;
 
 /**
  *
@@ -62,14 +69,14 @@ public class MainClassTest {
         }
         
         
-//        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "19","data/consensus.19.chr1.fa");
-//        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "21","data/consensus.21.chr1.fa");
-//        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "23","data/consensus.23.chr1.fa");
-//        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "25","data/consensus.25.chr1.fa");
-//        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "27","data/consensus.27.chr1.fa");
-//        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "29","data/consensus.29.chr1.fa");
-//        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "31","data/consensus.31.chr1.fa");
-//        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "33","data/consensus.33.chr1.fa");
+        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "19","data/consensus.19.chr1.fa");
+        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "21","data/consensus.21.chr1.fa");
+        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "23","data/consensus.23.chr1.fa");
+        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "25","data/consensus.25.chr1.fa");
+        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "27","data/consensus.27.chr1.fa");
+        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "29","data/consensus.29.chr1.fa");
+        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "31","data/consensus.31.chr1.fa");
+        VCFParser.TranscriptConsensusSequence(variantPerExon, newFile, "33","data/consensus.33.chr1.fa");
         
     }
 }

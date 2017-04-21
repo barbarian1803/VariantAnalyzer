@@ -1,4 +1,4 @@
-package variantanalyzer;
+package GTF;
 
 public class GTFEntry {
     private String chromosome;

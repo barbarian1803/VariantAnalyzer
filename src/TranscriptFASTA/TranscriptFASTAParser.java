@@ -1,12 +1,12 @@
-package variantanalyzer;
+package TranscriptFASTA;
 
+import GTF.GTFEntry;
+import GTF.GTFFile;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class TranscriptFASTAParser {
     public static TranscriptFASTAFile ParseFASTAFile(String name){
@@ -27,9 +27,9 @@ public class TranscriptFASTAParser {
             }
             reader.close();
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(CDNAFastaParser.class.getName()).log(Level.SEVERE, null, ex);
+            
         } catch (IOException ex) {
-            Logger.getLogger(CDNAFastaParser.class.getName()).log(Level.SEVERE, null, ex);
+            
         }
         return transcriptFile;
     }

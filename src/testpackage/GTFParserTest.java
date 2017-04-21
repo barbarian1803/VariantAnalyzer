@@ -1,4 +1,4 @@
-package variantanalyzer;
+package testpackage;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -7,6 +7,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import GTF.GTFFile;
+import GTF.GTFParser;
+import VCF.VCFParser;
+import VCF.VariantFile;
 
 /**
  *

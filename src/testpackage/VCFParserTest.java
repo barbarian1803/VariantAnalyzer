@@ -1,4 +1,7 @@
-package variantanalyzer;
+package testpackage;
+
+import VCF.VariantFile;
+import VCF.VCFParser;
 
 
 public class VCFParserTest {

@@ -1,4 +1,4 @@
-package variantanalyzer;
+package VCF;
 
 import java.util.ArrayList;
 import java.util.HashMap;

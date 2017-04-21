@@ -1,4 +1,4 @@
-package variantanalyzer;
+package TranscriptFASTA;
 
 import java.util.HashMap;
 import java.util.HashSet;

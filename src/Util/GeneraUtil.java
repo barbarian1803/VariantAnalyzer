@@ -1,4 +1,4 @@
-package variantanalyzer;
+package Util;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -107,4 +107,19 @@ public class GeneraUtil {
         
         return protein;
     }
+    
+    public static String SplitFastaToLines(String fasta, int charPerLine){
+        String output = "";
+        int lineLength=0;
+        for(int i=0;i<fasta.length();i++){
+            output+=fasta.charAt(i);
+            lineLength++;
+            if(lineLength==charPerLine){
+                output+="\n";
+                lineLength=0;
+            }
+        }
+        return output;
+    }
+    
 }

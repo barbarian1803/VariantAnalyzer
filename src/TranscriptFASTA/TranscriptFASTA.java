@@ -1,5 +1,6 @@
-package variantanalyzer;
+package TranscriptFASTA;
 
+import GTF.GTFEntry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

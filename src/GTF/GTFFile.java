@@ -1,4 +1,4 @@
-package variantanalyzer;
+package GTF;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,4 +1,4 @@
-package variantanalyzer;
+package TranscriptFASTA;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import Util.GeneraUtil;
 
 /**
  *
@@ -76,7 +77,7 @@ public class VariantFASTA {
         if(possibleSequences.size()==1){
             pw.write(oriMetadata+" pair:1 allele:1");
             pw.write("\n");
-            pw.write(possibleSequences.get(0).getSequence());
+            pw.write(GeneraUtil.SplitFastaToLines(possibleSequences.get(0).getSequence(),60));
             pw.write("\n");
             return;
         }
@@ -85,11 +86,11 @@ public class VariantFASTA {
             String[] pairs = s.split("-");
             pw.write(oriMetadata+" pair:"+noPair+" allele:1");
             pw.write("\n");
-            pw.write(possibleSequences.get(Integer.parseInt(pairs[0])).getSequence());
+            pw.write(GeneraUtil.SplitFastaToLines(possibleSequences.get(Integer.parseInt(pairs[0])).getSequence(), 60));
             pw.write("\n");
             pw.write(oriMetadata+" pair:"+noPair+" allele:2");
             pw.write("\n");
-            pw.write(possibleSequences.get(Integer.parseInt(pairs[1])).getSequence());
+            pw.write(GeneraUtil.SplitFastaToLines(possibleSequences.get(Integer.parseInt(pairs[1])).getSequence(), 60));
             pw.write("\n");
             noPair++;
         }
